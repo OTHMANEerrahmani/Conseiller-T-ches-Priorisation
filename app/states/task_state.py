@@ -30,6 +30,8 @@ class TaskState(rx.State):
     show_rules: bool = False
     current_month: int = datetime.now().month
     current_year: int = datetime.now().year
+    active_view: str = "dashboard"
+    show_mobile_menu: bool = False
 
     @rx.var
     def current_month_date_str(self) -> str:
@@ -213,6 +215,15 @@ class TaskState(rx.State):
     @rx.event
     def toggle_rules(self):
         self.show_rules = not self.show_rules
+
+    @rx.event
+    def set_active_view(self, view: str):
+        self.active_view = view
+        self.show_mobile_menu = False
+
+    @rx.event
+    def toggle_mobile_menu(self):
+        self.show_mobile_menu = not self.show_mobile_menu
 
     @rx.event
     def previous_month(self):
