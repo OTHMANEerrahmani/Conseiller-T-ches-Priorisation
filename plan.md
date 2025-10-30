@@ -27,41 +27,34 @@
 
 ---
 
-## 🎉 Projet Complet
+## Phase 4: Système de Dates Complètes ✅
+- [x] Modifier le modèle Tache pour stocker des dates complètes (datetime) au lieu de delai_jours
+- [x] Remplacer le champ "deadline_days" par un date picker dans le formulaire
+- [x] Mettre à jour le calcul de score pour utiliser les dates complètes
+- [x] Adapter l'affichage des badges pour montrer les dates formatées
+- [x] Mettre à jour les données de test avec des dates réelles
 
-Toutes les fonctionnalités demandées ont été implémentées avec succès:
+---
 
-### ✅ Moteur de Scoring (14 règles)
-1. **Matrice Eisenhower Quadrant I** (+1000): Urgent ET Important
-2. **Matrice Quadrant II** (+500): Important, Non Urgent
-3. **Matrice Quadrant III** (+250): Urgent, Non Important
-4. **Matrice Quadrant IV** (-50): Ni Urgent, Ni Important
-5. **Délai Imminent** (+200): ≤ 1 jour
-6. **Délai Court** (+100): ≤ 3 jours
-7. **Délai Moyen** (+50): ≤ 7 jours
-8. **Délai Lointain** (-100): > 30 jours
-9. **Tâche Rapide** (+40): ≤ 15 minutes
-10. **Tâche Focus** (+20): 16-30 minutes
-11. **Pénalité Longue Tâche** (-30): > 2 heures
-12. **Boost Stratégique** (+60): Important mais pas urgent
-13. **Pression Urgente** (+30): Urgent mais pas important
-14. **Pression Critique** (+80): Délai court (≤2j) + temps long (>60min)
+## Phase 5: Calendrier Visuel Interactif ✅
+- [x] Créer un composant calendrier mensuel avec grille de jours
+- [x] Afficher les tâches sur leurs dates d'échéance respectives
+- [x] Implémenter la navigation mois précédent/suivant
+- [x] Ajouter un code couleur par niveau de priorité (score)
+- [x] Permettre le clic sur une tâche dans le calendrier pour voir les détails
+- [x] Afficher un indicateur du nombre de tâches par jour
 
-### ✅ Fonctionnalités Complètes
-- Ajout/suppression/complétion de tâches
-- Tri par score/nom/délai
-- Filtres: Tous/Urgent/Important/Rapide
-- Statistiques en temps réel
-- Documentation interactive des règles
-- Chargement de données de test
-- Validation des entrées avec messages d'erreur
-- Section des tâches complétées avec undo
-- Design moderne avec JetBrains Mono et palette emerald/gray
+---
 
-### ✅ Tests Validés
-Tous les scénarios de test passent avec succès:
-- Filtrage par catégorie
-- Tri multi-critères
-- Calcul de scores
-- Gestion des états (actif/complété)
-- Validation des entrées
+## Phase 6: Améliorations UX du Calendrier
+- [ ] Améliorer la mise en page du calendrier pour une meilleure lisibilité
+- [ ] Ajouter des animations de transition entre les mois
+- [ ] Optimiser l'affichage des tâches dans les cellules du calendrier
+- [ ] Améliorer le design visuel avec des couleurs et espacements cohérents
+- [ ] Ajouter des indicateurs visuels pour le jour actuel
+- [ ] Synchroniser parfaitement les vues liste et calendrier
+
+---
+
+## 🎯 Objectif Actuel
+Phase 6 sera complétée pour finaliser l'expérience utilisateur du calendrier visuel.

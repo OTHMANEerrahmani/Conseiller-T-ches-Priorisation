@@ -38,7 +38,10 @@ def task_item(tache: Tache) -> rx.Component:
         ),
         rx.el.div(
             rx.el.div(
-                badge(f"{tache['delai_jours']}d", "bg-blue-100 text-blue-800"),
+                badge(
+                    rx.moment(tache["deadline"], format="MMM D"),
+                    "bg-blue-100 text-blue-800",
+                ),
                 badge(f"{tache['temps_estime_min']}m", "bg-purple-100 text-purple-800"),
                 rx.cond(
                     tache["urgente"],

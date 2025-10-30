@@ -5,6 +5,7 @@ from app.components.task_list import task_list
 from app.components.stats import stats_cards
 from app.components.completed_tasks import completed_tasks_list
 from app.components.documentation import documentation_section
+from app.components.calendar import calendar_view
 
 
 def index() -> rx.Component:
@@ -12,35 +13,37 @@ def index() -> rx.Component:
         rx.el.header(
             rx.el.div(
                 rx.el.div(
-                    rx.icon(
-                        "bot-message-square", class_name="h-8 w-8 text-emerald-500"
-                    ),
+                    rx.icon("bot-message-square", class_name="h-8 w-8 text-white"),
                     rx.el.h1(
-                        "Virtual Advisor", class_name="text-2xl font-bold text-gray-800"
+                        "Virtual Advisor",
+                        class_name="text-2xl font-bold text-white tracking-tight",
                     ),
                     class_name="flex items-center gap-3",
                 ),
                 rx.el.button(
                     "Load Test Data",
                     on_click=TaskState.load_test_data,
-                    class_name="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors",
+                    class_name="px-3 py-1.5 text-sm bg-white/20 text-white rounded-md hover:bg-white/30 transition-colors",
                 ),
-                class_name="container mx-auto flex items-center justify-between p-4 border-b border-gray-200",
-            )
+                class_name="container mx-auto flex items-center justify-between p-4",
+            ),
+            class_name="bg-gradient-to-br from-emerald-600 to-green-500 shadow-md",
         ),
         rx.el.main(
             rx.el.div(
+                stats_cards(),
                 rx.el.div(
-                    task_form(),
-                    stats_cards(),
+                    rx.el.div(
+                        task_form(), task_list(), class_name="flex flex-col gap-8"
+                    ),
+                    calendar_view(),
                     class_name="grid lg:grid-cols-3 gap-8 items-start",
                 ),
-                task_list(),
                 documentation_section(),
                 completed_tasks_list(),
                 class_name="container mx-auto p-4 md:p-8 flex flex-col gap-8",
             ),
-            class_name="bg-gray-50/50",
+            class_name="bg-gray-50",
         ),
         class_name="min-h-screen bg-white font-['JetBrains_Mono']",
     )
@@ -57,4 +60,4 @@ app = rx.App(
         ),
     ],
 )
-app.add_page(index)
+app.add_page(index, on_load=TaskState.load_test_data)

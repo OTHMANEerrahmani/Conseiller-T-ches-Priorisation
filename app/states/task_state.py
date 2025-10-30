@@ -3,6 +3,7 @@ import logging
 from typing import TypedDict
 import uuid
 from datetime import datetime, timedelta
+import calendar
 
 
 class Tache(TypedDict):
@@ -10,7 +11,7 @@ class Tache(TypedDict):
     nom: str
     urgente: bool
     importante: bool
-    delai_jours: int
+    deadline: str
     temps_estime_min: int
     score: int
     completed: bool
@@ -22,25 +23,72 @@ class TaskState(rx.State):
     new_task_name: str = ""
     is_urgent: bool = False
     is_important: bool = False
-    deadline_days: str = "7"
+    new_task_deadline: str = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
     estimated_time: str = "30"
     sort_by: str = "score"
     active_filter: str = "all"
     show_rules: bool = False
+    current_month: int = datetime.now().month
+    current_year: int = datetime.now().year
+
+    @rx.var
+    def current_month_date_str(self) -> str:
+        return f"{self.current_year:04d}-{self.current_month:02d}-01"
+
+    @rx.var
+    def calendar_days(self) -> list[dict[str, int | bool | str | list[Tache]]]:
+        month_calendar = calendar.monthcalendar(self.current_year, self.current_month)
+        days = []
+        for week in month_calendar:
+            for day in week:
+                if day == 0:
+                    days.append({"day": "", "is_current_month": False, "tasks": []})
+                else:
+                    date_str = (
+                        f"{self.current_year:04d}-{self.current_month:02d}-{day:02d}"
+                    )
+                    days.append(
+                        {
+                            "day": day,
+                            "is_current_month": True,
+                            "is_today": date_str == datetime.now().strftime("%Y-%m-%d"),
+                            "date_str": date_str,
+                            "tasks": self.tasks_by_date.get(date_str, []),
+                        }
+                    )
+        return days
+
+    @rx.var
+    def tasks_by_date(self) -> dict[str, list[Tache]]:
+        tasks_dict = {}
+        for task in self.taches:
+            if not task["completed"]:
+                deadline = task["deadline"]
+                if deadline not in tasks_dict:
+                    tasks_dict[deadline] = []
+                tasks_dict[deadline].append(task)
+        return tasks_dict
+
+    def _get_days_remaining(self, deadline_str: str) -> int:
+        if not deadline_str:
+            return 999
+        deadline_date = datetime.strptime(deadline_str, "%Y-%m-%d")
+        return (deadline_date - datetime.now()).days
 
     def _calculate_score(self, tache: Tache) -> int:
         score = 0
+        days_remaining = self._get_days_remaining(tache["deadline"])
         if tache["urgente"] and tache["importante"]:
             score += 1000
         if tache["importante"] and (not tache["urgente"]):
             score += 500
         if tache["urgente"] and (not tache["importante"]):
             score += 250
-        if tache["delai_jours"] <= 1:
+        if days_remaining <= 1:
             score += 200
-        elif tache["delai_jours"] <= 3:
+        elif days_remaining <= 3:
             score += 100
-        elif tache["delai_jours"] <= 7:
+        elif days_remaining <= 7:
             score += 50
         if tache["temps_estime_min"] <= 15:
             score += 40
@@ -54,9 +102,9 @@ class TaskState(rx.State):
             score += 30
         if not tache["urgente"] and (not tache["importante"]):
             score -= 50
-        if tache["delai_jours"] <= 2 and tache["temps_estime_min"] > 60:
+        if days_remaining <= 2 and tache["temps_estime_min"] > 60:
             score += 80
-        if tache["delai_jours"] > 30:
+        if days_remaining > 30:
             score -= 100
         return score
 
@@ -81,7 +129,7 @@ class TaskState(rx.State):
         elif self.sort_by == "name":
             return sorted(taches_to_sort, key=lambda t: t["nom"].lower())
         elif self.sort_by == "deadline":
-            return sorted(taches_to_sort, key=lambda t: t["delai_jours"])
+            return sorted(taches_to_sort, key=lambda t: t["deadline"])
         return taches_to_sort
 
     @rx.var
@@ -115,17 +163,19 @@ class TaskState(rx.State):
         if not self.new_task_name.strip():
             return rx.toast.error("Task name cannot be empty.")
         try:
-            delai = int(self.deadline_days)
             temps = int(self.estimated_time)
+            datetime.strptime(self.new_task_deadline, "%Y-%m-%d")
         except ValueError as e:
             logging.exception(f"Error: {e}")
-            return rx.toast.error("Please enter valid numbers for deadline and time.")
+            return rx.toast.error(
+                "Please enter valid numbers for time and a valid date."
+            )
         new_tache: Tache = {
             "id": str(uuid.uuid4()),
             "nom": self.new_task_name.strip(),
             "urgente": self.is_urgent,
             "importante": self.is_important,
-            "delai_jours": delai,
+            "deadline": self.new_task_deadline,
             "temps_estime_min": temps,
             "score": 0,
             "completed": False,
@@ -136,7 +186,9 @@ class TaskState(rx.State):
         self.new_task_name = ""
         self.is_urgent = False
         self.is_important = False
-        self.deadline_days = "7"
+        self.new_task_deadline = (datetime.now() + timedelta(days=7)).strftime(
+            "%Y-%m-%d"
+        )
         self.estimated_time = "30"
 
     @rx.event
@@ -163,63 +215,80 @@ class TaskState(rx.State):
         self.show_rules = not self.show_rules
 
     @rx.event
+    def previous_month(self):
+        if self.current_month == 1:
+            self.current_month = 12
+            self.current_year -= 1
+        else:
+            self.current_month -= 1
+
+    @rx.event
+    def next_month(self):
+        if self.current_month == 12:
+            self.current_month = 1
+            self.current_year += 1
+        else:
+            self.current_month += 1
+
+    @rx.event
     def load_test_data(self):
         self.taches = []
+        today = datetime.now()
         test_data = [
             {
                 "nom": "Finish Q3 Report",
                 "urgente": True,
                 "importante": True,
-                "delai_jours": 2,
+                "deadline": (today + timedelta(days=2)).strftime("%Y-%m-%d"),
                 "temps_estime_min": 240,
             },
             {
                 "nom": "Plan team offsite",
                 "urgente": False,
                 "importante": True,
-                "delai_jours": 30,
+                "deadline": (today + timedelta(days=30)).strftime("%Y-%m-%d"),
                 "temps_estime_min": 180,
             },
             {
                 "nom": "Book dentist appointment",
                 "urgente": False,
                 "importante": False,
-                "delai_jours": 14,
+                "deadline": (today + timedelta(days=14)).strftime("%Y-%m-%d"),
                 "temps_estime_min": 10,
             },
             {
                 "nom": "Reply to client email",
                 "urgente": True,
                 "importante": False,
-                "delai_jours": 1,
+                "deadline": (today + timedelta(days=1)).strftime("%Y-%m-%d"),
                 "temps_estime_min": 15,
             },
             {
                 "nom": "Review design mockups",
                 "urgente": False,
                 "importante": True,
-                "delai_jours": 7,
+                "deadline": (today + timedelta(days=7)).strftime("%Y-%m-%d"),
                 "temps_estime_min": 60,
             },
             {
                 "nom": "Organize digital files",
                 "urgente": False,
                 "importante": False,
-                "delai_jours": 60,
+                "deadline": (today + timedelta(days=60)).strftime("%Y-%m-%d"),
                 "temps_estime_min": 90,
             },
             {
                 "nom": "Pay electricity bill",
                 "urgente": True,
                 "importante": True,
-                "delai_jours": 1,
+                "deadline": (today + timedelta(days=1)).strftime("%Y-%m-%d"),
                 "temps_estime_min": 5,
             },
             {
                 "nom": "Brainstorm new project ideas",
                 "urgente": False,
                 "importante": True,
-                "delai_jours": 45,
+                "deadline": (today + timedelta(days=45)).strftime("%Y-%m-%d"),
                 "temps_estime_min": 75,
             },
         ]
@@ -229,7 +298,7 @@ class TaskState(rx.State):
                 "nom": item["nom"],
                 "urgente": item["urgente"],
                 "importante": item["importante"],
-                "delai_jours": item["delai_jours"],
+                "deadline": item["deadline"],
                 "temps_estime_min": item["temps_estime_min"],
                 "score": 0,
                 "completed": False,

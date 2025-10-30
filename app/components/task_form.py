@@ -53,11 +53,11 @@ def task_form() -> rx.Component:
                 ),
                 rx.el.div(
                     form_field(
-                        "Deadline (days)",
-                        "e.g. 7",
-                        TaskState.deadline_days,
-                        TaskState.set_deadline_days,
-                        type="number",
+                        "Deadline",
+                        "",
+                        TaskState.new_task_deadline,
+                        TaskState.set_new_task_deadline,
+                        type="date",
                     ),
                     form_field(
                         "Time (minutes)",
